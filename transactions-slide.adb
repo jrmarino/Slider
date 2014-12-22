@@ -720,6 +720,32 @@ package body Transactions.Slide is
    end browse_file;
 
 
+   ------------------------------
+   --  indicate_no_difference  --
+   ------------------------------
+
+   procedure indicate_no_difference (temporary_file : in String;
+      older_version, newer_version : in String)
+   is
+      tmpfile : TIO.File_Type;
+   begin
+      TIO.Open (File => tmpfile,
+                  Mode => TIO.Append_File,
+                  Name => temporary_file);
+      TIO.Put_Line (tmpfile, "--- " & older_version);
+      TIO.Put_Line (tmpfile, "+++ " & newer_version);
+      TIO.New_Line (tmpfile);
+      TIO.Put_Line (tmpfile, "    There is no difference between these " &
+                             "two versions of the file.");
+      TIO.Close (tmpfile);
+   exception
+      when TIO.End_Error =>
+         if TIO.Is_Open (tmpfile) then
+            TIO.Close (tmpfile);
+         end if;
+   end indicate_no_difference;
+
+
    -----------------
    --  view_diff  --
    -----------------
@@ -747,7 +773,19 @@ package body Transactions.Slide is
          GOS.Free (Args (Index));
       end loop;
       if success then
+         declare
+            File_Size : Natural := Natural (Ada.Directories.Size (tmpfile));
+         begin
+            if File_Size = 0 then
+               indicate_no_difference (temporary_file => tmpfile,
+               older_version => arg2, newer_version => arg3);
+            end if;
+         end;
+
          browse_file (path => tmpfile, differential => True);
+      end if;
+      if DIR.Exists (tmpfile) then
+         DIR.Delete_File (tmpfile);
       end if;
    end view_diff;
 

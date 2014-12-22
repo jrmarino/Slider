@@ -77,4 +77,8 @@ private
    procedure view_diff (path : in String; orig, dest : in Positive);
    --  handle diff viewing
 
+   procedure indicate_no_difference (temporary_file : in String;
+      older_version, newer_version : in String);
+   --  Create a dummy output for diff when files are identifical
+
 end Transactions.Slide;
