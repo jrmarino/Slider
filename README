@@ -1,0 +1,14 @@
+
+===============================================
+  HAMMER file system time slider utility 1.00
+===============================================
+       Copyright (C) 2014 John R. Marino
+
+
+Usage: slider file [save-as-file]
+
+This tool enables the user to browse through all available versions of the
+given file stored in HAMMER history, view differences between two versions,
+replace the current version with any previous version, restore a deleted file,
+and save any previous or deleted version to a new file.
+
