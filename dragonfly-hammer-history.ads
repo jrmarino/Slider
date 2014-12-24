@@ -34,7 +34,6 @@ package DragonFly.HAMMER.History is
    type flush_state   is (dirty, clean);
    type search_result is (found, deleted, not_found);
 
-   subtype Hex16Final is String (1 .. 16);
    subtype Trax       is String (1 .. 20);
    subtype TraxTime   is String (1 .. 19);
 
@@ -69,20 +68,15 @@ package DragonFly.HAMMER.History is
    --  It is only used if the file doesn't exist, so we are looking for
    --  deleted files.
 
-   function format_as_hex (bignum : Int64) return String;
-   function format_as_hex (bignum : HB.hammer_tid) return String;
-   --  Format string with c-equivalent of %016x
-
 private
 
    tz_offset : constant CTZ.Time_Offset := CTZ.UTC_Time_Offset;
 
+   function format_as_hex (bignum : HB.hammer_tid) return String;
+   --  Format string with c-equivalent of %016x
+
    function format_timestamp (raw : uInt32) return TraxTime;
    --  Convert uInt32 to YYYY-MM-DD HH:MM:SS format with system offset
-
-   function zeropad_hex (bignum : uInt64) return Hex16Final;
-   --  Helper to format_as_hex functions
-
 
    procedure collect_history (
                fd        : in DragonFly.file_descriptor;

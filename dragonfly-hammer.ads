@@ -19,9 +19,6 @@ with Ada.Exceptions;
 
 package DragonFly.HAMMER is
 
-   pragma Preelaborate;
-
-
    --------------------
    ---  EXCEPTIONS  ---
    --------------------
@@ -31,5 +28,15 @@ package DragonFly.HAMMER is
    Match_Failure    : exception;
    Fatality         : exception;
    Fake_Transaction : exception;
+
+   function format_as_hex (bignum : Int64) return String;
+   --  Format string with c-equivalent of %016x
+
+private
+
+   subtype Hex16Final is String (1 .. 16);
+
+   function zeropad_hex (bignum : uInt64) return Hex16Final;
+   --  Helper to format_as_hex functions
 
 end DragonFly.HAMMER;
