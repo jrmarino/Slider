@@ -19,12 +19,20 @@ with Ada.Text_IO;
 with Ada.Text_IO.Text_Streams;
 with Ada.Direct_IO;
 with Ada.Directories;
+with Ada.Calendar.Formatting;
+with GNAT.OS_Lib;
 
 package body Transactions.Delete is
 
    package TIO renames Ada.Text_IO;
    package TTS renames Ada.Text_IO.Text_Streams;
    package DIR renames Ada.Directories;
+   package GOS renames GNAT.OS_Lib;
+
+
+   ---------------------
+   -- launch_deleted  --
+   ---------------------
 
    procedure launch_deleted (path : in String; newpath : in String)
    is
@@ -110,6 +118,96 @@ package body Transactions.Delete is
       TIC.Delete (comwindow);
       TIC.End_Windows;
    end launch_deleted;
+
+
+   -------------------------------
+   -- launch_deleted_directory  --
+   -------------------------------
+
+   procedure launch_deleted_directory (
+      path      : in String;
+      cleanpath : in String;
+      newpath   : in String)
+   is
+      use type TIC.Column_Count;
+      use type TIC.Real_Key_Code;
+      mformat  : menu_format := found_text;
+   begin
+      TIC.Init_Screen;
+      TIC.Set_Echo_Mode (False);
+      TIC.Set_Raw_Mode (True);
+      TIC.Set_Cbreak_Mode (True);
+      if TIC.Columns > app_width then
+         app_width := TIC.Columns;
+      end if;
+      TIC.Start_Color;
+      TIC.Init_Pair (TIC.Color_Pair (1), TIC.Cyan,   TIC.Black);
+      TIC.Init_Pair (TIC.Color_Pair (2), TIC.White,  TIC.Black);
+      TIC.Init_Pair (TIC.Color_Pair (3), TIC.Black,  TIC.Black);
+      TIC.Init_Pair (TIC.Color_Pair (4), TIC.Black,  TIC.White);
+      TIC.Init_Pair (TIC.Color_Pair (5), TIC.Green,  TIC.Black);
+      TIC.Init_Pair (TIC.Color_Pair (6), TIC.Red,    TIC.Black);
+      TIC.Init_Pair (TIC.Color_Pair (7), TIC.Yellow, TIC.Black);
+      c_cyan   := TIC.Color_Pair (1);
+      c_white  := TIC.Color_Pair (2);
+      c_black  := TIC.Color_Pair (3);
+      c_path   := TIC.Color_Pair (4);
+      c_green  := TIC.Color_Pair (5);
+      c_red    := TIC.Color_Pair (6);
+      c_yellow := TIC.Color_Pair (7);
+
+      start_command_window (path);
+      start_view_window;
+      show_menu (format => mformat);
+      show_directory_version (path);
+      start_input_window;
+      declare
+         success   : Boolean;
+         confirmed : Boolean;
+         KeyCode   : TIC.Real_Key_Code;
+      begin
+         TIC.Set_KeyPad_Mode (Win => inpwindow, SwitchOn => True);
+         loop
+            TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
+            KeyCode := TIC.Get_Keystroke (inpwindow);
+            clear_input_window;
+            case KeyCode is
+               when TIC.Key_F1 =>
+                  null;
+               when TIC.Key_F2 =>
+                  show_menu (format => saveas);
+                  confirmed := confirm_save_as (cleanpath);
+                  show_menu (format => mformat);
+                  show_directory_version (path);
+                  if confirmed then
+                     duplicate_directory (path, cleanpath, success);
+                     if success then
+                        indicate_success (cleanpath);
+                        exit;
+                     end if;
+                  end if;
+               when TIC.Key_F3 =>
+                  show_menu (format => saveas);
+                  confirmed := confirm_save_as (newpath);
+                  show_menu (format => mformat);
+                  show_directory_version (path);
+                  if confirmed then
+                     duplicate_directory (path, newpath, success);
+                     if success then
+                        indicate_success (newpath);
+                        exit;
+                     end if;
+                  end if;
+               when TIC.Key_F4 => exit;
+               when others     => null;
+            end case;
+         end loop;
+      end;
+      TIC.Delete (inpwindow);
+      TIC.Delete (viewport);
+      TIC.Delete (comwindow);
+      TIC.End_Windows;
+   end launch_deleted_directory;
 
 
    --------------------------
@@ -213,6 +311,30 @@ package body Transactions.Delete is
    end show_version;
 
 
+   ------------------------------
+   --  show_directory_version  --
+   ------------------------------
+
+   procedure show_directory_version (path : in String)
+   is
+      use type TIC.Line_Position;
+      use type TIC.Column_Count;
+      center   : constant TIC.Line_Position := viewheight / 2;
+      leftside : TIC.Column_Count;
+   begin
+      leftside := (app_width - 44) / 2;
+      TIC.Erase (Win => viewport);
+      TIC.Set_Color (Win => viewport, Pair => c_green);
+      TIC.Move_Cursor (Win => viewport, Line => center, Column => leftside);
+      TIC.Add (Win => viewport, Str => "Deleted directory found: ");
+
+      TIC.Set_Color (Win => viewport, Pair => c_white);
+      TIC.Add (Win => viewport, Str => DHH.modification_timestamp (path));
+
+      TIC.Refresh (Win => viewport);
+   end show_directory_version;
+
+
    ------------------------
    --  indicate_success  --
    ------------------------
@@ -255,7 +377,7 @@ package body Transactions.Delete is
    function confirm_save_as (destination : in String) return Boolean is
       use type TIC.Line_Position;
       use type TIC.Column_Count;
-      msg1     : constant String := "Please confirm file should be " &
+      msg1     : constant String := "Please confirm this should be " &
                     "restored to";
       msg2     : constant String := "Destination directory does not exist " &
                     "so restore is not possible:";
@@ -431,25 +553,27 @@ package body Transactions.Delete is
    end show_menu;
 
 
+   ---------------------
+   --  error_message  --
+   ---------------------
+
+   procedure error_message (message : in String) is
+      msg : String (1 .. Integer (app_width) - 1) := (others => ' ');
+   begin
+      msg (msg'First .. message'Last) := message;
+      TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
+      TIC.Set_Color (Win => inpwindow, Pair => c_red);
+      TIC.Add (Win => inpwindow, Str => msg);
+      TIC.Refresh (Win => inpwindow);
+   end error_message;
+
+
    ----------------
    --  recreate  --
    ----------------
 
    procedure recreate (origin : in String; destination : in String;
       success : out Boolean) is
-
-      procedure error_message (message : in String);
-
-      procedure error_message (message : in String) is
-         msg : String (1 .. Integer (app_width) - 1) := (others => ' ');
-      begin
-         msg (msg'First .. message'Last) := message;
-         TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
-         TIC.Set_Color (Win => inpwindow, Pair => c_red);
-         TIC.Add (Win => inpwindow, Str => msg);
-         TIC.Refresh (Win => inpwindow);
-      end error_message;
-
    begin
       success := False;
       DIR.Copy_File (
@@ -466,6 +590,45 @@ package body Transactions.Delete is
          error_message ("FAILED! You do not have permission to " &
                         "create the destination file.");
    end recreate;
+
+
+   ---------------------------
+   --  duplicate_directory  --
+   ---------------------------
+
+   procedure duplicate_directory (
+      origin : in String;
+      destination : in String;
+      success : out Boolean)
+   is
+      RC      : Integer;
+      tmpfile : constant String := "/tmp/slider-cpdup-" &
+                                   DIR.Simple_Name (destination);
+      arg1    : constant String := "-VV";
+      arg2    : constant String := "-i0";
+      Args    : GOS.Argument_List := (
+                   new String'(arg1),
+                   new String'(arg2),
+                   new String'(origin),
+                   new String'(destination));
+   begin
+      GOS.Spawn (Program_Name => "/bin/cpdup",
+                 Args         => Args,
+                 Output_File  => tmpfile,
+                 Return_Code  => RC,
+                 Success      => success);
+      for Index in Args'Range loop
+         GOS.Free (Args (Index));
+      end loop;
+      if RC = 0 then
+         if DIR.Exists (tmpfile) then
+            DIR.Delete_File (tmpfile);
+         end if;
+      else
+         error_message ("CPDUP FAILED!  see " & tmpfile);
+         success := False;
+      end if;
+   end duplicate_directory;
 
 
    -------------------

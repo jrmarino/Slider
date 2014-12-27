@@ -18,7 +18,13 @@
 package Transactions.Delete is
 
    procedure launch_deleted (path : in String; newpath : in String);
-   --  Handle undelete functionality, called by main program
+   --  Handle undelete functionality, called by main program (file)
+
+   procedure launch_deleted_directory (
+      path      : in String;
+      cleanpath : in String;
+      newpath   : in String);
+   --  Handle undelete functionality, called by main program (directory)
 
 private
 
@@ -42,6 +48,9 @@ private
    procedure show_version (viewable : in Boolean);
    --  Show deleted version
 
+   procedure show_directory_version (path : in String);
+   --  Show deleted version of given directory path
+
    procedure recreate (origin : in String; destination : in String;
       success : out Boolean);
    --  The "undelete" function
@@ -60,5 +69,14 @@ private
 
    procedure browse_file (path : in String);
    --  Handle viewing text file
+
+   procedure duplicate_directory (
+      origin : in String;
+      destination : in String;
+      success : out Boolean);
+   --  copy a deleted directory to a new location
+
+   procedure error_message (message : in String);
+   --  Generic error message handler
 
 end Transactions.Delete;

@@ -39,9 +39,10 @@ package Transactions is
    bright     : constant TIC.Character_Attribute_Set := (
                    Bold_Character   => True,
                    others => False);
+   restored   : constant String := ".restored";
 
-
-   procedure launch (path : in String; newpath : in String);
+   procedure launch (path, newpath : in String; twoparams : in Boolean);
+   --  entry procedure which launches other routines as needed
 
    function textfile (path : in String) return Boolean;
    --  Returns true if there are no null characters in the file

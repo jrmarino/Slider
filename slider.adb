@@ -23,7 +23,7 @@ procedure slider is
    package CL  renames Ada.Command_Line;
    package TIO renames Ada.Text_IO;
 
-   SVER : constant String := "1.01";
+   SVER : constant String := "2.00";
 
    procedure echo_usage;
 
@@ -37,7 +37,8 @@ procedure slider is
       TIO.Put_Line ("       Copyright (C) 2014 John R. Marino");
       TIO.New_Line;
       TIO.New_Line;
-      TIO.Put_Line ("Usage: slider file [save-as-file]");
+      TIO.Put_Line ("Usage: slider file [save-target]");
+      TIO.Put_Line ("-or-   slider existing-directory [save-target]");
       TIO.New_Line;
       TIO.Put_Line ("This tool enables the user to browse through all " &
                     "available versions of the");
@@ -47,6 +48,12 @@ procedure slider is
                     " restore a deleted file,");
       TIO.Put_Line ("and save any previous or deleted version to a new " &
                     "file.");
+      TIO.New_Line;
+      TIO.Put_line ("If slider is passed the path of an existing directory, " &
+                    "the history of that");
+      TIO.Put_Line ("directory will be searched for all deleted files and " &
+                    "subdirectories that can");
+      TIO.Put_Line ("be restored, along with the option to restore them.");
       TIO.New_Line;
    end echo_usage;
 
@@ -63,10 +70,9 @@ begin
          echo_usage;
       else
          if CL.Argument_Count = 1 then
-            Transactions.launch (CL.Argument (1),
-               CL.Argument (1) & ".restored");
+            Transactions.launch (CL.Argument (1), "", False);
          else
-            Transactions.launch (CL.Argument (1), CL.Argument (2));
+            Transactions.launch (CL.Argument (1), CL.Argument (2), True);
          end if;
       end if;
    end if;

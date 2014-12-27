@@ -20,12 +20,15 @@ with Ada.Directories;
 with Ada.Direct_IO;
 with Ada.Containers;
 with Transactions.Delete;
+with Transactions.Ghosts;
 with Transactions.Slide;
 
 package body Transactions is
 
    package TIO renames Ada.Text_IO;
+   package DIR renames Ada.Directories;
    package DEL renames Transactions.Delete;
+   package GST renames Transactions.Ghosts;
    package SLD renames Transactions.Slide;
 
 
@@ -33,20 +36,82 @@ package body Transactions is
    --  launch  --
    --------------
 
-   procedure launch (path : in String; newpath : in String)
+   procedure launch (path, newpath : in String; twoparams : in Boolean)
    is
-      use DHH;
+      use type DHH.flush_state;
+      use type DHH.search_result;
+      use type DIR.File_Kind;
       use type Ada.Containers.Count_Type;
+
+      function gen_save_as (clean_ghost : String) return String;
+      function ghost_clean (ghost : String) return String;
+
+      function gen_save_as (clean_ghost : String) return String
+      is
+      begin
+         if twoparams then
+            return newpath;
+         else
+            return clean_ghost & restored;
+         end if;
+      end gen_save_as;
+
+      function ghost_clean (ghost : String) return String
+      is
+         atsign  : Natural := 0;
+         counter : Positive := 1;
+      begin
+         loop
+            if ghost (counter) = '@' then
+               atsign := counter;
+               exit;
+            end if;
+            counter := counter + 1;
+            exit when counter > ghost'Last;
+         end loop;
+         if atsign = 0 then
+            return ghost;
+         else
+            return ghost (ghost'First .. atsign - 1) &
+                   ghost (atsign + 21 .. ghost'Last);
+         end if;
+      end ghost_clean;
+
    begin
+      if DIR.Exists (path) and then DIR.Kind (path) = DIR.Directory then
+         declare
+            ghost    : constant String := GST.scan_directory (path);
+            clean    : constant String := ghost_clean (ghost);
+            newghost : constant String := gen_save_as (clean);
+         begin
+            if ghost = "  undetected  " then
+               TIO.Put_Line ("Sorry, no deleted entries were detected in " &
+                  "this directory.");
+            elsif ghost = "" then
+               null;
+            else
+               if DIR.Exists (ghost) and then
+                  DIR.Kind (ghost) = DIR.Directory
+               then
+                  DEL.launch_deleted_directory (ghost, clean, newghost);
+                  return;
+               end if;
+               DHH.scan_history (ghost, ScanData);
+               DEL.launch_deleted (ghost, newghost);
+            end if;
+            return;
+         end;
+      end if;
+
       DHH.scan_history (path, ScanData);
-      if ScanData.path_check = not_found then
+      if ScanData.path_check = DHH.not_found then
          TIO.Put_Line ("Error: There is no current file with that name, " &
             "nor is has any trace of a");
          TIO.Put_Line ("deleted version of '" & path & "' being found.");
          return;
       end if;
-      if ScanData.path_check = deleted then
-         DEL.launch_deleted (path, newpath);
+      if ScanData.path_check = DHH.deleted then
+         DEL.launch_deleted (path, gen_save_as (path));
          return;
       end if;
       if ScanData.history.Is_Empty then
@@ -62,8 +127,7 @@ package body Transactions is
             "seconds and try again.");
          return;
       end if;
-      --  TIO.Put_Line ("versions = " & ScanData.history.Length'Img);
-      SLD.launch_slide (path, newpath);
+      SLD.launch_slide (path, gen_save_as (path));
    end launch;
 
 
@@ -73,7 +137,7 @@ package body Transactions is
 
    function textfile (path : in String) return Boolean
    is
-      File_Size : Natural := Natural (Ada.Directories.Size (path));
+      File_Size : Natural := Natural (DIR.Size (path));
    begin
       if File_Size > 2048 then
          File_Size := 2048;
