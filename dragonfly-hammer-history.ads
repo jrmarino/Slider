@@ -68,6 +68,10 @@ package DragonFly.HAMMER.History is
    --  It is only used if the file doesn't exist, so we are looking for
    --  deleted files.
 
+   function modification_timestamp (path : in String) return TraxTime;
+   --  Convert file modification time YYYY-MM-DD HH:MM:SS format
+   --  There is no handling for bad path
+
 private
 
    tz_offset : constant CTZ.Time_Offset := CTZ.UTC_Time_Offset;

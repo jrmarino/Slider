@@ -18,6 +18,7 @@ with Ada.Text_IO;
 with Ada.Strings.Fixed;
 with Ada.Calendar.Formatting;
 with Ada.Calendar.Conversions;
+with Ada.Directories;
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with DragonFly.FileStatus;
@@ -27,6 +28,7 @@ package body DragonFly.HAMMER.History is
    package TIO renames Ada.Text_IO;
    package CFM renames Ada.Calendar.Formatting;
    package CCV renames Ada.Calendar.Conversions;
+   package DIR renames Ada.Directories;
    package SFX renames Ada.Strings.Fixed;
    package STR renames Ada.Strings;
    package DFS renames DragonFly.FileStatus;
@@ -163,33 +165,33 @@ package body DragonFly.HAMMER.History is
       loop
          eject := True;
          for j in 0 .. history.count - 1 loop
-            declare
-               temptrx : constant String := "@@0x" &
-                            format_as_hex (history.hist_ary (j).tid);
-               testfd  : file_descriptor;
-               inode   : DFS.inode_data;
-               result  : Int32;
-            begin
-               DFS.stat (filename & temptrx, inode, result);
-               if result < 0 then
-                  raise FILE_Failure;
-               end if;
-               if (inode.st_mode and DFS.S_IFIFO) > 0 then
-                  raise Fake_Transaction;
-               end if;
-               testfd := HB.open_file_for_reading (filename & temptrx);
-               if testfd > 0 then
-                  if history.hist_ary (j).tid > top_tid then
+            if history.hist_ary (j).tid > top_tid then
+               declare
+                  temptrx : constant String := "@@0x" &
+                               format_as_hex (history.hist_ary (j).tid);
+                  testfd  : file_descriptor;
+                  inode   : DFS.inode_data;
+                  result  : Int32;
+               begin
+                  DFS.stat (filename & temptrx, inode, result);
+                  if result < 0 then
+                     raise FILE_Failure;
+                  end if;
+                  if (inode.st_mode and DFS.S_IFIFO) > 0 then
+                     raise Fake_Transaction;
+                  end if;
+                  testfd := HB.open_file_for_reading (filename & temptrx);
+                  if testfd > 0 then
                      top_tid   := history.hist_ary (j).tid;
                      timestamp := history.hist_ary (j).time32;
                      suffix    := temptrx;
+                     HB.close_file (testfd);
                   end if;
-                  HB.close_file (testfd);
-               end if;
-            exception
-               when FILE_Failure => null;
-               when Fake_Transaction => null;
-            end;
+               exception
+                  when FILE_Failure => null;
+                  when Fake_Transaction => null;
+               end;
+            end if;
          end loop;
          exit when (history.head.flags and HB.HAMMER_IOC_HISTORY_EOF) > 0;
          if (history.head.flags and HB.HAMMER_IOC_HISTORY_NEXT_KEY) > 0 and
@@ -232,5 +234,16 @@ package body DragonFly.HAMMER.History is
       hack_time := CCV.To_Ada_Time (Unix_Time => hack);
       return CFM.Image (Date => hack_time, Time_Zone => tz_offset);
    end format_timestamp;
+
+
+   ------------------------------
+   --  modification_timestamp  --
+   ------------------------------
+
+   function modification_timestamp (path : in String) return TraxTime is
+      modtime : constant Ada.Calendar.Time := DIR.Modification_Time (path);
+   begin
+      return CFM.Image (Date => modtime, Time_Zone => tz_offset);
+   end modification_timestamp;
 
 end DragonFly.HAMMER.History;
