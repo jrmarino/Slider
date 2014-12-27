@@ -241,9 +241,13 @@ package body DragonFly.HAMMER.History is
    ------------------------------
 
    function modification_timestamp (path : in String) return TraxTime is
-      modtime : constant Ada.Calendar.Time := DIR.Modification_Time (path);
+      modtime : Ada.Calendar.Time;
    begin
+      modtime := DIR.Modification_Time (path);
       return CFM.Image (Date => modtime, Time_Zone => tz_offset);
+   exception
+      when others =>
+         return "1776-07-04 16:00:00";
    end modification_timestamp;
 
 end DragonFly.HAMMER.History;

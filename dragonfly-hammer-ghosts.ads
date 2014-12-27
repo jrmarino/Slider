@@ -70,4 +70,9 @@ private
    --  Scan historical version of directory for either deleted files or
    --  directories, and augment "ghost" container as necessary.
 
+   function directory_has_files (directory_path : String) return Boolean;
+   --  if the directory has at least one entry other than "." or "..", this
+   --  function will return true.  If the path doesn't exist, it will return
+   --  false, so it can check this too.
+
 end DragonFly.HAMMER.Ghosts;

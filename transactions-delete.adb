@@ -18,7 +18,6 @@
 with Ada.Text_IO;
 with Ada.Text_IO.Text_Streams;
 with Ada.Direct_IO;
-with Ada.Directories;
 with Ada.Calendar.Formatting;
 with GNAT.OS_Lib;
 
@@ -26,7 +25,6 @@ package body Transactions.Delete is
 
    package TIO renames Ada.Text_IO;
    package TTS renames Ada.Text_IO.Text_Streams;
-   package DIR renames Ada.Directories;
    package GOS renames GNAT.OS_Lib;
 
 
@@ -86,7 +84,6 @@ package body Transactions.Delete is
                browse_file (origin);
                show_menu (format => mformat);
                show_version (viewable => viewable);
-               clear_input_window;
             when TIC.Key_F2 =>
                recreate (origin, path, success);
                if success then
@@ -148,13 +145,15 @@ package body Transactions.Delete is
       TIC.Init_Pair (TIC.Color_Pair (5), TIC.Green,  TIC.Black);
       TIC.Init_Pair (TIC.Color_Pair (6), TIC.Red,    TIC.Black);
       TIC.Init_Pair (TIC.Color_Pair (7), TIC.Yellow, TIC.Black);
-      c_cyan   := TIC.Color_Pair (1);
-      c_white  := TIC.Color_Pair (2);
-      c_black  := TIC.Color_Pair (3);
-      c_path   := TIC.Color_Pair (4);
-      c_green  := TIC.Color_Pair (5);
-      c_red    := TIC.Color_Pair (6);
-      c_yellow := TIC.Color_Pair (7);
+      TIC.Init_Pair (TIC.Color_Pair (10), TIC.Magenta, TIC.Black);
+      c_cyan    := TIC.Color_Pair (1);
+      c_white   := TIC.Color_Pair (2);
+      c_black   := TIC.Color_Pair (3);
+      c_path    := TIC.Color_Pair (4);
+      c_green   := TIC.Color_Pair (5);
+      c_red     := TIC.Color_Pair (6);
+      c_yellow  := TIC.Color_Pair (7);
+      c_magenta := TIC.Color_Pair (10);
 
       start_command_window (path);
       start_view_window;
@@ -173,7 +172,9 @@ package body Transactions.Delete is
             clear_input_window;
             case KeyCode is
                when TIC.Key_F1 =>
-                  null;
+                  browse_directory (path);
+                  show_menu (format => mformat);
+                  show_directory_version (path);
                when TIC.Key_F2 =>
                   show_menu (format => saveas);
                   confirmed := confirm_save_as (cleanpath);
@@ -758,5 +759,252 @@ package body Transactions.Delete is
       start_view_mode (File_Size, truncated);
 
    end browse_file;
+
+
+   ------------------------------------
+   --  < operator for listing_entry  --
+   ------------------------------------
+
+   function "<" (L, R : listing_entry) return Boolean
+   is
+   begin
+      return L.filename < R.filename;
+   end "<";
+
+
+   ----------------------------------
+   --  retrieve_directory_listing  --
+   ----------------------------------
+
+   function retrieve_directory_listing (directory_path : in String)
+   return listing_array
+   is
+      search : DIR.Search_Type;
+      filter : DIR.Filter_Type := (others => True);
+      data   : DIR.Directory_Entry_Type;
+      total  : Natural := 0;
+   begin
+      DIR.Start_Search (
+         Search    => search,
+         Directory => directory_path,
+         Pattern   => "",
+         Filter    => filter);
+      while DIR.More_Entries (search) loop
+         DIR.Get_Next_Entry (search, data);
+         declare
+            sname : constant String := DIR.Simple_Name (data);
+            okay  : constant Boolean := not (sname = "." or sname = "..");
+         begin
+            if okay then
+               total := total + 1;
+            end if;
+         end;
+      end loop;
+      DIR.End_Search (search);
+
+      declare
+         result : listing_array (0 .. total - 1);
+         index  : Natural := 0;
+      begin
+         DIR.Start_Search (
+            Search    => search,
+            Directory => directory_path,
+            Pattern   => "",
+            Filter    => filter);
+         while DIR.More_Entries (search) loop
+            DIR.Get_Next_Entry (search, data);
+            declare
+               use type DIR.File_Kind;
+               fname : String (1 .. 255) := (others => ' ');
+               sname : constant String := DIR.Simple_Name (data);
+               okay  : constant Boolean := not (sname = "." or sname = "..");
+            begin
+               if okay then
+                  fname (fname'First .. sname'Last) := sname;
+                  result (index).filename := fname;
+                  result (index).filetype := DIR.Kind (data);
+                  if result (index).filetype /= DIR.Ordinary_File then
+                     result (index).filesize := 0;
+                  else
+                     result (index).filesize := DIR.Size (data);
+                  end if;
+                  result (index).modtime  := DHH.modification_timestamp (
+                     directory_path & "/" & sname);
+                  index := index + 1;
+               end if;
+            end;
+         end loop;
+         DIR.End_Search (search);
+         Sort (result);
+         return result;
+      end;
+   end retrieve_directory_listing;
+
+
+   ---------------------------
+   --  human_readable_size  --
+   ---------------------------
+
+   function human_readable_size (filesize : DIR.File_Size) return String
+   is
+      result : String := "    0";
+      size   : constant Natural  := Natural (filesize);
+      raw    : constant String   := size'Img;
+      kilo   : constant Positive := 1024;
+      mega   : constant Positive := kilo * kilo;
+      giga   : constant Positive := mega * kilo;
+   begin
+      if size < 10 then
+         result (5) := raw (2);
+      elsif size < 100 then
+         result (4 .. 5) := raw (2 .. 3);
+      elsif size < 1000 then
+         result (3 .. 5) := raw (2 .. 4);
+      elsif size < 10000 then
+         result (2 .. 5) := raw (2 .. 5);
+      elsif size < 100000 then
+         result (1 .. 5) := raw (2 .. 6);
+      elsif size < mega then
+         declare
+            K     : constant Positive := size / kilo;
+            K_raw : constant String := K'Img;
+         begin
+            result := " " & K_raw (2 .. 4) & "K";
+         end;
+      elsif size < mega * 10 then
+         declare
+            M10   : constant Positive := (10 * size) / mega;
+            M10_raw : constant String := M10'Img;
+         begin
+            result := " " & M10_raw (2) & "." & M10_raw (3) & "M";
+         end;
+      elsif size < giga then
+         declare
+            M     : constant Positive := size / mega;
+            M_raw : constant String := M'Img;
+         begin
+            if size < mega * 100 then
+               result := "  " & M_raw (2 .. 3) & "M";
+            else
+               result := " " & M_raw (2 .. 4) & "M";
+            end if;
+         end;
+      else  --  assume all files < 10G
+         declare
+            G10     : constant Positive := size / (giga / 10);
+            G10_raw : constant String := G10'Img;
+         begin
+            result := " " & G10_raw (2) & "." & G10_raw (3) & "G";
+         end;
+      end if;
+      return result;
+   end human_readable_size;
+
+
+   ------------------------
+   --  browse_directory  --
+   ------------------------
+
+   procedure browse_directory (directory_path : in String)
+   is
+      contents : constant listing_array :=
+                    retrieve_directory_listing (directory_path);
+      listsize : constant Natural := contents'Length;
+      pages    : constant Positive :=
+                    1 + ((listsize - 1) / Positive (viewheight));
+      page     : Positive := 1;
+
+      procedure display_page (page : Positive);
+      procedure display_nothing;
+
+      procedure display_nothing
+      is
+      begin
+         TIC.Erase (viewport);
+         TIC.Set_Character_Attributes (
+            Win  => viewport,
+            Attr => TIC.Normal_Video);
+         TIC.Add (Win => viewport,
+                  Str => "This directory is completely empty!");
+         TIC.Refresh (Win => viewport);
+         TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
+      end display_nothing;
+
+      procedure display_page (page : Positive)
+      is
+         use type TIC.Line_Position;
+         minindex : Natural := (page - 1) * Positive (viewheight);
+         maxindex : Natural := (page * Positive (viewheight)) - 1;
+         line     : TIC.Line_Position := 0;
+         displen  : constant Positive := Positive (app_width) - 23;
+      begin
+         if maxindex >= listsize then
+            maxindex := listsize - 1;
+         end if;
+         TIC.Erase (viewport);
+         for index in minindex .. maxindex loop
+            TIC.Move_Cursor (Win => viewport, Line => line, Column => 0);
+            case contents (index).filetype is
+               when DIR.Directory =>
+                  TIC.Set_Character_Attributes (Win => viewport,
+                     Attr => bright, Color => c_cyan);
+               when DIR.Special_File => null;
+                  TIC.Set_Character_Attributes (Win => viewport,
+                     Attr => bright, Color => c_magenta);
+               when DIR.Ordinary_File => null;
+                  TIC.Set_Character_Attributes (Win => viewport,
+                     Attr => TIC.Normal_Video);
+            end case;
+            TIC.Add (Win => viewport,
+                     Str => contents (index).filename (1 .. displen));
+            TIC.Move_Cursor (Win => viewport, Line => line,
+               Column => TIC.Column_Position (displen + 1));
+            TIC.Set_Character_Attributes (Win => viewport,
+               Attr => TIC.Normal_Video);
+            TIC.Add (Win => viewport, Str => human_readable_size (
+                     contents (index).filesize) & " ");
+            TIC.Set_Color (Win => viewport, Pair => c_yellow);
+            TIC.Add (Win => viewport,
+                     Str => contents (index).modtime (1 .. 16));
+            line := line + 1;
+         end loop;
+         TIC.Refresh (Win => viewport);
+      end display_page;
+   begin
+      declare
+         KeyCode  : TIC.Real_Key_Code;
+      begin
+         loop
+            show_menu (
+               format     => view,
+               scrollup   => page > 1,
+               scrolldown => page < pages
+            );
+            if listsize > 0 then
+               show_page_count (page, pages);
+               display_page (page);
+            else
+               display_nothing;
+            end if;
+            TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
+            KeyCode := TIC.Get_Keystroke (inpwindow);
+            case KeyCode is
+               when TIC.Key_Cursor_Up =>
+                  if page > 1 then
+                     page := page - 1;
+                  end if;
+               when TIC.Key_Cursor_Down =>
+                  if page < pages then
+                     page := page + 1;
+                  end if;
+               when TIC.Key_F4 =>
+                  clear_input_window;
+                  exit;
+               when others =>
+                  null;
+            end case;
+         end loop;
+      end;
+   end browse_directory;
 
 end Transactions.Delete;

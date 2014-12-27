@@ -79,6 +79,7 @@ package body Transactions.Ghosts is
          loop
             list_deleted_entries (listing, selection);
             show_menu (listing (selection).dir_entry = directory);
+            TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
             KeyCode := TIC.Get_Keystroke (inpwindow);
             case KeyCode is
                when TIC.Key_Cursor_Up =>
@@ -111,9 +112,11 @@ package body Transactions.Ghosts is
                   end if;
                when TIC.Key_F1 | carriage =>
                   if listing (selection).dir_entry = directory then
-                     return justdir & dirs_ghosts (listing (selection).index);
+                     return justdir &
+                        dirs_ghosts.Element (listing (selection).index);
                   else
-                     return justdir & file_ghosts (listing (selection).index);
+                     return justdir &
+                        file_ghosts.Element (listing (selection).index);
                   end if;
                when TIC.Key_F4 =>
                   clear_input_window;

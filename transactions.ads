@@ -36,6 +36,7 @@ package Transactions is
    c_black    : TIC.Color_Pair;
    c_red      : TIC.Color_Pair;
    c_yellow   : TIC.Color_Pair;
+   c_magenta  : TIC.Color_Pair;
    bright     : constant TIC.Character_Attribute_Set := (
                    Bold_Character   => True,
                    others => False);

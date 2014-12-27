@@ -49,7 +49,7 @@ procedure slider is
       TIO.Put_Line ("and save any previous or deleted version to a new " &
                     "file.");
       TIO.New_Line;
-      TIO.Put_line ("If slider is passed the path of an existing directory, " &
+      TIO.Put_Line ("If slider is passed the path of an existing directory, " &
                     "the history of that");
       TIO.Put_Line ("directory will be searched for all deleted files and " &
                     "subdirectories that can");

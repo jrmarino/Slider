@@ -15,7 +15,12 @@
 --
 
 
+with Ada.Directories;
+with Ada.Containers.Generic_Array_Sort;
+
 package Transactions.Delete is
+
+   package DIR renames Ada.Directories;
 
    procedure launch_deleted (path : in String; newpath : in String);
    --  Handle undelete functionality, called by main program (file)
@@ -29,6 +34,26 @@ package Transactions.Delete is
 private
 
    type menu_format is (found_binary, found_text, view, saveas);
+
+   type listing_entry is record
+      filetype : DIR.File_Kind;
+      filename : String (1 .. 255);
+      filesize : DIR.File_Size;
+      modtime  : DHH.TraxTime;
+   end record;
+
+   type listing_array is array (Natural range <>) of listing_entry;
+
+   function "<" (L, R : listing_entry) return Boolean;
+   --  Define how to sort listing_entry
+
+   procedure Sort is new Ada.Containers.Generic_Array_Sort
+      (Natural, listing_entry, listing_array);
+   --  Templated sort procedure for listing_arrays
+
+   function retrieve_directory_listing (directory_path : in String)
+      return listing_array;
+   --  return a sorted array of directory contents records
 
    procedure start_command_window (path : in String);
    --  Create instruction windows
@@ -78,5 +103,11 @@ private
 
    procedure error_message (message : in String);
    --  Generic error message handler
+
+   procedure browse_directory (directory_path : in String);
+   --  Routine to browse directory in color and by pages
+
+   function human_readable_size (filesize : DIR.File_Size) return String;
+   --  Returns 5-character size using K, M, G as necessary
 
 end Transactions.Delete;

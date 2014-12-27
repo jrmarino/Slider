@@ -152,11 +152,9 @@ package body DragonFly.HAMMER.Ghosts is
                         end if;
                      end loop;
                      if not found and then
-                        DIR.Exists (directory_path & truedir)
+                        directory_has_files (directory_path & truedir)
                      then
-                        if not found then
-                           ghost.Append (truedir);
-                        end if;
+                        ghost.Append (truedir);
                      end if;
                   end if;
                else
@@ -164,7 +162,22 @@ package body DragonFly.HAMMER.Ghosts is
                   if ndx = Filename_Container.No_Index then
                      ndx := ghost.Find_Index (Item => filename);
                      if ndx = Filename_Container.No_Index then
-                        ghost.Append (filename);
+                        declare
+                           inode   : DFS.inode_data;
+                           result  : Int32;
+                        begin
+                           DFS.stat (truedir, inode, result);
+                           if result < 0 then
+                              raise FILE_Failure;
+                           end if;
+                           if (inode.st_mode and DFS.S_IFIFO) > 0 then
+                              raise Fake_Transaction;
+                           end if;
+                           ghost.Append (filename);
+                        exception
+                           when FILE_Failure => null;
+                           when Fake_Transaction => null;
+                        end;
                      end if;
                   end if;
                end if;
@@ -252,5 +265,40 @@ package body DragonFly.HAMMER.Ghosts is
       end loop;
 
    end scan_history_of_directory;
+
+
+   ---------------------------
+   --  directory_has_file  --
+   ---------------------------
+
+   function directory_has_files (directory_path : String) return Boolean
+   is
+      search : DIR.Search_Type;
+      filter : DIR.Filter_Type := (others => True);
+      data   : DIR.Directory_Entry_Type;
+      result : Boolean := False;
+   begin
+      if not DIR.Exists (directory_path) then
+         return False;
+      end if;
+      DIR.Start_Search (
+         Search    => search,
+         Directory => directory_path,
+         Pattern   => "",
+         Filter    => filter);
+      while not result and DIR.More_Entries (search) loop
+         DIR.Get_Next_Entry (search, data);
+         declare
+            sname : constant String := DIR.Simple_Name (data);
+            okay  : constant Boolean := not (sname = "." or sname = "..");
+         begin
+            if okay then
+               result := True;
+            end if;
+         end;
+      end loop;
+      DIR.End_Search (search);
+      return result;
+   end directory_has_files;
 
 end DragonFly.HAMMER.Ghosts;
