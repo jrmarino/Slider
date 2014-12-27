@@ -98,11 +98,20 @@ package DragonFly.FileStatus is
    --  polls information about a file from a given path (wrapper)
    --  return 0 on success, -1 on failure
 
+   function symlink (source, newlink : String) return Boolean;
+   --  creates a symlink link "newlink" to the "source" path (wrapper)
+   --  returns True on success, False on failure
+
 private
 
    function private_stat (path : ICS.chars_ptr; sb : inode_data) return Int32;
    pragma Import (C, private_stat, "stat");
    --  polls information about a file from a given path
+   --  return 0 on success, -1 on failure
+
+   function private_symlink (source, newlink : ICS.chars_ptr) return Int32;
+   pragma Import (C, private_symlink, "symlink");
+   --  creates a symlink link "newlink" to the "source" path
    --  return 0 on success, -1 on failure
 
 end DragonFly.FileStatus;

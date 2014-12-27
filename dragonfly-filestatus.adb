@@ -34,4 +34,18 @@ package body DragonFly.FileStatus is
    end stat;
 
 
+   -----------------------
+   --  symlink wrapper  --
+   -----------------------
+
+   function symlink (source, newlink : String) return Boolean
+   is
+      source_ptr  : ICS.chars_ptr := ICS.New_String (source);
+      newlink_ptr : ICS.chars_ptr := ICS.New_String (newlink);
+      result      : Int32;
+   begin
+      result := private_symlink (source_ptr, newlink_ptr);
+      return result = 0;
+   end symlink;
+
 end DragonFly.FileStatus;
