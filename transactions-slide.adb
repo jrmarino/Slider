@@ -203,7 +203,10 @@ package body Transactions.Slide is
             end case;
          end loop;
       end;
-
+      TIC.Delete (inpwindow);
+      TIC.Delete (viewport);
+      TIC.Delete (comwindow);
+      TIC.End_Windows;
 
    end launch_slide;
 
