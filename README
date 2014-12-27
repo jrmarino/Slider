@@ -1,14 +1,17 @@
-
 ===============================================
-  HAMMER file system time slider utility 1.00
+  HAMMER file system time slider utility 2.00
 ===============================================
        Copyright (C) 2014 John R. Marino
 
 
-Usage: slider file [save-as-file]
+Usage: slider file [save-target]
+-or-   slider existing-directory [save-target]
 
 This tool enables the user to browse through all available versions of the
 given file stored in HAMMER history, view differences between two versions,
 replace the current version with any previous version, restore a deleted file,
 and save any previous or deleted version to a new file.
 
+If slider is passed the path of an existing directory, the history of that
+directory will be searched for all deleted files and subdirectories that can
+be restored, along with the option to restore them.
