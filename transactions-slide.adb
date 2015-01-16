@@ -612,8 +612,10 @@ package body Transactions.Slide is
                      if page > max_pages then
                         exit;
                      end if;
-                     offsets (page) := j + 1;
-                     lastpage := page;
+                     if j /= File_Size then
+                        offsets (page) := j + 1;
+                        lastpage := page;
+                     end if;
                   end if;
                when others => null;
             end case;
@@ -636,35 +638,44 @@ package body Transactions.Slide is
                            (others => (others => ' '));
                begin
                   loop
+                     exit when marker > File_Size;
                      case Contents (marker) is
                         when ASCII.NUL .. ASCII.BS | ASCII.VT .. ASCII.US =>
                            null;
                         when ASCII.LF =>
                            mline := mline + 1;
-                           if mline = viewheight then
-                              exit;
-                           end if;
-                           mcol  := 1;
+                           mcol := 1;
                         when others =>
                            if mcol <= Natural (app_width) then
                               matrix (mline) (mcol) := Contents (marker);
                               mcol := mcol + 1;
                            end if;
                      end case;
-                     exit when mline > viewheight;
+                     exit when mline = viewheight;
                      marker := marker + 1;
-                     exit when marker > File_Size;
                   end loop;
-                  for j in 0 .. viewheight - 1 loop
+                  for j in 0 .. viewheight - 2 loop
                      TIC.Move_Cursor (Win => viewport, Line => j, Column => 0);
                      TIC.Add (Win => viewport, Str => matrix (j));
                   end loop;
+                  declare
+                     use type TIC.Line_Position;
+                     use type TIC.Column_Position;
+                     lastline : TIC.Line_Position := viewheight - 1;
+                  begin
+                     for x in 1 .. app_width loop
+                        TIC.Add (Win    => viewport,
+                                 Line   => lastline,
+                                 Column => x - 1,
+                                 Ch     => matrix (lastline)(Positive (x)));
+                     end loop;
+                  end;
                end;
 
                if differential then
                   declare
                      use type TIC.Line_Position;
-                     FirstLine : TIC.Line_Position := 1;
+                     FirstLine : TIC.Line_Position := 0;
                      peekchar  : TIC.Attributed_Character;
                      len       : Integer := Integer (app_width);
                   begin

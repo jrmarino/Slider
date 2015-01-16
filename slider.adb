@@ -23,7 +23,7 @@ procedure slider is
    package CL  renames Ada.Command_Line;
    package TIO renames Ada.Text_IO;
 
-   SVER : constant String := "2.00";
+   SVER : constant String := "2.01";
 
    procedure echo_usage;
 

@@ -77,8 +77,8 @@ package body Transactions.Delete is
       start_input_window;
       TIC.Set_KeyPad_Mode (Win => inpwindow, SwitchOn => True);
       loop
-         KeyCode := TIC.Get_Keystroke (inpwindow);
          clear_input_window;
+         KeyCode := TIC.Get_Keystroke (inpwindow);
          case KeyCode is
             when TIC.Key_F1 =>
                browse_file (origin);
@@ -256,6 +256,7 @@ package body Transactions.Delete is
    begin
       TIC.Erase (Win => inpwindow);
       TIC.Refresh (Win => inpwindow);
+      TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
    end clear_input_window;
 
 
@@ -682,8 +683,10 @@ package body Transactions.Delete is
                      if page > max_pages then
                         exit;
                      end if;
-                     offsets (page) := j + 1;
-                     lastpage := page;
+                     if j /= File_Size then
+                        offsets (page) := j + 1;
+                        lastpage := page;
+                     end if;
                   end if;
                when others => null;
             end case;
@@ -706,24 +709,21 @@ package body Transactions.Delete is
                            (others => (others => ' '));
                begin
                   loop
+                     exit when marker > File_Size;
                      case Contents (marker) is
                         when ASCII.NUL .. ASCII.BS | ASCII.VT .. ASCII.US =>
                            null;
                         when ASCII.LF =>
                            mline := mline + 1;
-                           if mline = viewheight then
-                              exit;
-                           end if;
-                           mcol  := 1;
+                           mcol := 1;
                         when others =>
                            if mcol <= Natural (app_width) then
                               matrix (mline) (mcol) := Contents (marker);
                               mcol := mcol + 1;
                            end if;
                      end case;
-                     exit when mline > viewheight;
+                     exit when mline = viewheight;
                      marker := marker + 1;
-                     exit when marker > File_Size;
                   end loop;
                   for j in 0 .. viewheight - 1 loop
                      TIC.Move_Cursor (Win => viewport, Line => j, Column => 0);

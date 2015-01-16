@@ -2,18 +2,43 @@ with "/usr/local/lib/gnat/adacurses.gpr";
 
 project Slider is
 
-   type Mode_Type is ("debug", "release");
+   type Mode_Type is
+      ("debug", "release");
    Mode : Mode_Type := external ("mode", "debug");
-
    for Main use ("slider.adb");
-   
+
    package Compiler is
+
       case Mode is
+
          when "debug" =>
             for Switches ("Ada") use ("-gnaty", "-gnateE", "-g");
+
          when "release" =>
             for Switches ("Ada") use ("-O2");
       end case;
    end Compiler;
 
+   package Ide is
+
+      case Mode is
+
+         when "debug" =>
+            for Compiler_Command ("ada") use "gnatmake";
+
+         when "release" =>
+
+      end case;
+   end Ide;
+
+   case Mode is
+
+      when "debug" =>
+         for Object_Dir use "construction";
+
+      when "release" =>
+
+   end case;
+
 end Slider;
+
