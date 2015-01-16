@@ -64,12 +64,13 @@ package body DragonFly.HAMMER.History is
             descriptor := HB.open_file_for_reading (path => path & dname);
             collect_history (fd => descriptor, filename => path,
                suffix => delname, timestamp => delstamp);
+            HB.close_file (descriptor);
             if delname = failed_search then
                raise Match_Failure;
             end if;
-            HB.close_file (descriptor);
             descriptor := HB.open_file_for_reading (path => path & delname);
-            formhack   := format_timestamp (delstamp);
+            HB.close_file (descriptor);
+            formhack := format_timestamp (delstamp);
             result.path_check := deleted;
             result.history.Append (New_Item => (delname, formhack));
          exception
@@ -88,8 +89,27 @@ package body DragonFly.HAMMER.History is
             loop
                for j in 0 .. history.count - 1 loop
                   formhack := format_timestamp (history.hist_ary (j).time32);
-                  result.history.Append (New_Item => ("@@0x" &
-                     format_as_hex (history.hist_ary (j).tid), formhack));
+                  declare
+                     testfd  : file_descriptor;
+                     fname   : constant Trax := "@@0x" &
+                                  format_as_hex (history.hist_ary (j).tid);
+                     inode   : DFS.inode_data;
+                     statres : Int32;
+                  begin
+                     DFS.stat (path & fname, inode, statres);
+                     if statres < 0 then
+                        raise FILE_Failure;
+                     end if;
+                     if (inode.st_mode and DFS.S_IFIFO) > 0 then
+                        raise Fake_Transaction;
+                     end if;
+                     testfd := HB.open_file_for_reading (path & fname);
+                     HB.close_file (testfd);
+                     result.history.Append (New_Item => (fname, formhack));
+                  exception
+                     when FILE_Failure => null;
+                     when Fake_Transaction => null;
+                  end;
                end loop;
                exit History_Loop when
                   (history.head.flags and HB.HAMMER_IOC_HISTORY_EOF) > 0;
@@ -102,6 +122,7 @@ package body DragonFly.HAMMER.History is
                   open_file => descriptor,
                   history   => history);
             end loop History_Loop;
+         HB.close_file (descriptor);
       end if;
 
    exception
