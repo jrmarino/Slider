@@ -824,7 +824,9 @@ package body Transactions.Slide is
       valid    : Boolean;
    begin
       TIC.Erase (Win => viewport);
-      TIC.Set_Color (Win => viewport, Pair => c_yellow);
+      TIC.Set_Character_Attributes (Win   => viewport,
+                                    Color => c_yellow,
+                                    Attr  => bright);
       declare
          dirname : constant String := DIR.Containing_Directory (destination);
       begin
@@ -847,7 +849,9 @@ package body Transactions.Slide is
          TIC.Refresh (Win => comwindow);
       end if;
 
-      TIC.Set_Color (Win => viewport, Pair => c_white);
+      TIC.Set_Character_Attributes (Win   => viewport,
+                                    Color => c_white,
+                                    Attr  => TIC.Normal_Video);
       if destination'Length < app_width then
          leftside := (app_width - destination'Length) / 2;
          TIC.Move_Cursor (Win => viewport, Line => row2, Column => leftside);
