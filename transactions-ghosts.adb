@@ -152,9 +152,7 @@ package body Transactions.Ghosts is
                       First_Line_Position   => 0,
                       First_Column_Position => 0);
 
-      TIC.Move_Cursor (Win => comwindow, Line => 1, Column => 0);
-      TIC.Set_Character_Attributes (Win => comwindow,
-         Attr => TIC.Normal_Video, Color => TIC.Color_Pair (c_path));
+      TIC.Erase (Win => comwindow);
       bar (bar'First .. bar'First + 6) := "Scanned";
       if justdir'Length > maxlen then
          bar (bar'First + 8 .. maxlen + 8) :=
@@ -162,7 +160,13 @@ package body Transactions.Ghosts is
       else
          bar (bar'First + 8 .. justdir'Length + 8) := justdir;
       end if;
-      TIC.Add (Win => comwindow, Str => bar);
+      TIC.Set_Character_Attributes (Win => comwindow,
+         Attr => TIC.Normal_Video, Color => TIC.Color_Pair (c_path));
+      TIC.Add (Win    => comwindow,
+               Line   => 1,
+               Column => 0,
+               Str    => bar,
+               Len    => Integer (app_width));
    end start_command_window;
 
 
@@ -240,33 +244,35 @@ package body Transactions.Ghosts is
 
    procedure show_menu (is_directory : Boolean)
    is
-      use type TIC.Column_Position;
-      blank    : String (1 .. Integer (app_width)) := (others => ' ');
+      len  : constant Integer := Integer (app_width);
+      blank    : String (1 .. len) := ('A', 'r', 'r', 'o', 'w', 's', ':',
+                 ' ', 'm', 'o', 'v', 'e', ' ', ' ', ' ', 'F', '1', ':',
+                 others => ' ');
+
+      procedure whiten (col : in TIC.Column_Position; count : in Natural);
+      procedure whiten (col : in TIC.Column_Position; count : in Natural) is
+      begin
+         TIC.Change_Attributes (Win => comwindow, Attr => bright, Line => 0,
+            Column => col, Count => count, Color => c_white);
+      end whiten;
    begin
-      TIC.Set_Character_Attributes (Win => comwindow, Attr => bright);
-      TIC.Move_Cursor (Win => comwindow, Line => 0, Column => 0);
-      TIC.Add (Win => comwindow, Str => blank);
-      TIC.Move_Cursor (Win => comwindow, Line => 0, Column => 0);
-      TIC.Set_Color (Win => comwindow, Pair => c_white);
-      TIC.Add (Win => comwindow, Str => "Arrows: ");
-      TIC.Set_Color (Win => comwindow, Pair => c_cyan);
-      TIC.Add (Win => comwindow, Str => "move   ");
-      TIC.Set_Color (Win => comwindow, Pair => c_white);
-      TIC.Add (Win => comwindow, Str => "F1: ");
-      TIC.Set_Color (Win => comwindow, Pair => c_cyan);
+      blank (len - 7 .. blank'Last) := "F4: Quit";
       if is_directory then
-         TIC.Add (Win => comwindow, Str => "Select directory to resurrect");
+         blank (20 .. 48) := "Select directory to resurrect";
       else
-         TIC.Add (Win => comwindow, Str => "Select file to undelete");
+         blank (20 .. 42) := "Select file to undelete";
       end if;
-
-      TIC.Move_Cursor (Win => comwindow, Line => 0,
-         Column => app_width - 8);
-
-      TIC.Set_Color (Win => comwindow, Pair => c_white);
-      TIC.Add (Win => comwindow, Str => "F4: ");
-      TIC.Set_Color (Win => comwindow, Pair => c_cyan);
-      TIC.Add (Win => comwindow, Str => "Quit");
+      TIC.Set_Character_Attributes (Win   => comwindow,
+                                    Attr  => bright,
+                                    Color => c_cyan);
+      TIC.Add (Win    => comwindow,
+               Line   => 0,
+               Column => 0,
+               Str    => blank,
+               Len    => len);
+      whiten (0, 7);
+      whiten (15, 3);
+      whiten (TIC.Column_Position (len - 8), 3);
       TIC.Refresh (Win => comwindow);
 
    end show_menu;
