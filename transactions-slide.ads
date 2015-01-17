@@ -49,11 +49,15 @@ private
    --  return the name of the restored file (as much as can fit on 1 line)
 
    procedure browse_file (path : in String;
+      timestamp    : in DHH.TraxTime := (others => ' ');
       differential : in Boolean := False);
    --  Handle viewing text file, including diff files
 
-   procedure show_page_count (page : in Positive; total_pages : in Positive);
+   procedure show_page_count (page        : in Positive;
+                              total_pages : in Positive;
+                              timestamp   : in DHH.TraxTime);
    --  Add page # of ## footer during view contents functionality
+   --  Also add a timestamp in the left hand corner (it could be blank)
 
    procedure clear_input_window;
    --  Clear input window without using "clear" function

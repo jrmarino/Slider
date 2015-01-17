@@ -144,8 +144,10 @@ package body Transactions.Slide is
                      declare
                         seepath : constant String := path & ScanData.history
                                      (ScanData.diff_new).trax_id;
+                        stamp   : constant DHH.TraxTime := ScanData.history
+                                     (ScanData.diff_new).timestamp;
                      begin
-                        browse_file (seepath);
+                        browse_file (path => seepath, timestamp => stamp);
                      end;
                      show_menu (format => mformat);
                      pick_version (viewable);
@@ -232,17 +234,24 @@ package body Transactions.Slide is
    --  show_page_count  --
    -----------------------
 
-   procedure show_page_count (page : in Positive; total_pages : in Positive)
+   procedure show_page_count (
+      page        : in Positive;
+      total_pages : in Positive;
+      timestamp   : in DHH.TraxTime)
    is
       use type TIC.Column_Count;
-      whole_line : String (1 .. Natural (app_width)) := (others => ' ');
+      len        : constant Positive := Positive (app_width);
+      whole_line : String (1 .. len) := (others => ' ');
       info : constant String := "page" & page'Img & " of" & total_pages'Img;
-      leftside : constant Positive := Positive (app_width) - info'Length + 1;
+      leftside : constant Positive := len - info'Length + 1;
    begin
+      whole_line (3 .. DHH.TraxTime'Length + 2) := timestamp;
       whole_line (leftside .. whole_line'Last) := info;
       TIC.Set_Color (Win => inpwindow, Pair => c_yellow);
-      TIC.Move_Cursor (Win => inpwindow, Line => 0, Column => 0);
-      TIC.Add (Win => inpwindow, Str => whole_line);
+      TIC.Add (Win    => inpwindow,
+               Line   => 0,
+               Column => 0,
+               Str    => whole_line);
       TIC.Refresh (Win => inpwindow);
    end show_page_count;
 
@@ -567,6 +576,7 @@ package body Transactions.Slide is
    -------------------
 
    procedure browse_file (path : in String;
+      timestamp    : in DHH.TraxTime := (others => ' ');
       differential : in Boolean := False)
    is
       File_Size : Natural := Natural (Ada.Directories.Size (path));
@@ -706,7 +716,7 @@ package body Transactions.Slide is
                end if;
 
                TIC.Refresh (Win => viewport);
-               show_page_count (page, lastpage);
+               show_page_count (page, lastpage, timestamp);
                lastseen := page;
             end if;
             KeyCode := TIC.Get_Keystroke (inpwindow);
