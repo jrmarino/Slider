@@ -326,7 +326,9 @@ package body Transactions.Slide is
                                      format = found_binary;
       samefile : constant Boolean := ScanData.diff_old = ScanData.diff_new;
    begin
-      TIC.Set_Character_Attributes (Win => comwindow, Attr => bright);
+      TIC.Set_Character_Attributes (Win   => comwindow,
+                                    Color => c_white,
+                                    Attr  => bright);
       TIC.Move_Cursor (Win => comwindow, Line => 0, Column => 0);
       TIC.Add (Win => comwindow, Str => blank);
       TIC.Move_Cursor (Win => comwindow, Line => 1, Column => 0);
