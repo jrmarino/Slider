@@ -61,6 +61,9 @@ package body Transactions is
          atsign  : Natural := 0;
          counter : Positive := 1;
       begin
+         if ghost'Length = 0 then
+            return ghost;
+         end if;
          loop
             if ghost (counter) = '@' then
                atsign := counter;
