@@ -1,7 +1,7 @@
 ===============================================
-  HAMMER file system time slider utility 2.00
+  HAMMER file system time slider utility 2.03
 ===============================================
-       Copyright (C) 2014 John R. Marino
+      Copyright (C) 2014-15 John R. Marino
 
 
 Usage: slider file [save-target]

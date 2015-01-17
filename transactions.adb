@@ -1,5 +1,5 @@
 --
---  Copyright (c) 2014 John Marino <draco@marino.st>
+--  Copyright (c) 2014-15 John Marino <draco@marino.st>
 --
 --  Permission to use, copy, modify, and distribute this software for any
 --  purpose with or without fee is hereby granted, provided that the above
