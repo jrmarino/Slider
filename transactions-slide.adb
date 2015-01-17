@@ -705,8 +705,8 @@ package body Transactions.Slide is
                   end;
                end if;
 
-               show_page_count (page, lastpage);
                TIC.Refresh (Win => viewport);
+               show_page_count (page, lastpage);
                lastseen := page;
             end if;
             KeyCode := TIC.Get_Keystroke (inpwindow);
