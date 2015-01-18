@@ -15,3 +15,10 @@ and save any previous or deleted version to a new file.
 If slider is passed the path of an existing directory, the history of that
 directory will be searched for all deleted files and subdirectories that can
 be restored, along with the option to restore them.
+
+
+
+
+
+Step by step instructions with screenshots can be found at:
+http://www.dragonflybsd.org/docs/docs/howtos/howtoslide/
