@@ -23,7 +23,7 @@ procedure slider is
    package CL  renames Ada.Command_Line;
    package TIO renames Ada.Text_IO;
 
-   SVER : constant String := "2.04";
+   SVER : constant String := "2.05";
 
    procedure echo_usage;
 
@@ -34,7 +34,7 @@ procedure slider is
       TIO.Put_Line (DASH);
       TIO.Put_Line ("  HAMMER file system time slider utility " & SVER);
       TIO.Put_Line (DASH);
-      TIO.Put_Line ("      Copyright (C) 2014-15 John R. Marino");
+      TIO.Put_Line ("     Copyright (C) 2014-2015 John R. Marino");
       TIO.New_Line;
       TIO.New_Line;
       TIO.Put_Line ("Usage: slider file [save-target]");

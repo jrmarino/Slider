@@ -29,9 +29,7 @@ package body Transactions.Ghosts is
    function scan_directory (path : in String) return String
    is
       use type TIC.Column_Position;
-      bust    : constant String := "  undetected  ";
-      justdir : constant String := DIR.Containing_Directory (path & "/")
-                                   & "/";
+      justdir : constant String := DIR.Containing_Directory (path & "/") & "/";
    begin
       DHG.scan_for_file_ghosts (
          directory_path   => path,
@@ -43,6 +41,10 @@ package body Transactions.Ghosts is
       end if;
 
       TIC.Init_Screen;
+      if not TIC.Has_Colors then
+         TIC.End_Windows;
+         return nocolor;
+      end if;
       TIC.Set_Echo_Mode (False);
       TIC.Set_Raw_Mode (True);
       TIC.Set_Cbreak_Mode (True);
@@ -111,6 +113,10 @@ package body Transactions.Ghosts is
                      end if;
                   end if;
                when TIC.Key_F1 | carriage =>
+                  TIC.Delete (inpwindow);
+                  TIC.Delete (viewport);
+                  TIC.Delete (comwindow);
+                  TIC.End_Windows;
                   if listing (selection).dir_entry = directory then
                      return justdir &
                         dirs_ghosts.Element (listing (selection).index);

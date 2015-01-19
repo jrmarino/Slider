@@ -44,6 +44,12 @@ package body Transactions.Delete is
    begin
       viewable := textfile (origin);
       TIC.Init_Screen;
+      if not TIC.Has_Colors then
+         TIC.End_Windows;
+         TIO.Put_Line (msg_mono1);
+         TIO.Put_Line (msg_mono2);
+         return;
+      end if;
       TIC.Set_Echo_Mode (False);
       TIC.Set_Raw_Mode (True);
       TIC.Set_Cbreak_Mode (True);

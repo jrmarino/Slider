@@ -41,6 +41,12 @@ package Transactions is
                    Bold_Character   => True,
                    others => False);
    restored   : constant String := ".restored";
+   bust       : constant String := "  undetected  ";
+   nocolor    : constant String := "  monochrome  ";
+   msg_mono1  : constant String := "Sorry, this terminal does not support " &
+                                    "color through curses.";
+   msg_mono2  : constant String := "As color support is currently a " &
+                                   "requirement, Slider is unable to launch.";
 
    procedure launch (path, newpath : in String; twoparams : in Boolean);
    --  entry procedure which launches other routines as needed

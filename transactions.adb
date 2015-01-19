@@ -87,9 +87,12 @@ package body Transactions is
             clean    : constant String := ghost_clean (ghost);
             newghost : constant String := gen_save_as (clean);
          begin
-            if ghost = "  undetected  " then
+            if ghost = bust then
                TIO.Put_Line ("Sorry, no deleted entries were detected in " &
                   "this directory.");
+            elsif ghost = nocolor then
+               TIO.Put_Line (msg_mono1);
+               TIO.Put_Line (msg_mono2);
             elsif ghost = "" then
                null;
             else
