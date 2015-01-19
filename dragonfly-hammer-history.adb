@@ -55,6 +55,12 @@ package body DragonFly.HAMMER.History is
          when FILE_Failure => null;
       end;
       if result.path_check = not_found then
+         --  If we are here, then descriptor was never opened
+         if DIR.Exists (path) then
+            --  The file exists, but couldn't be opened.  No read perms!
+            result.path_check := secret;
+            return;
+         end if;
          declare
             dname    : Trax;
             delname  : Trax;

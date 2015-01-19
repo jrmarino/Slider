@@ -32,7 +32,7 @@ package DragonFly.HAMMER.History is
    ---------------------------
 
    type flush_state   is (dirty, clean);
-   type search_result is (found, deleted, not_found);
+   type search_result is (found, deleted, not_found, secret);
 
    subtype Trax       is String (1 .. 20);
    subtype TraxTime   is String (1 .. 19);

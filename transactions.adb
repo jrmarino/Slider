@@ -116,6 +116,11 @@ package body Transactions is
          TIO.Put_Line ("deleted version of '" & path & "' being found.");
          return;
       end if;
+      if ScanData.path_check = DHH.secret then
+         TIO.Put_Line ("Error: The file exists, but its permissions " &
+                       "prevent Slider from reading it.");
+         return;
+      end if;
       if ScanData.path_check = DHH.deleted then
          DEL.launch_deleted (path, gen_save_as (path));
          return;
