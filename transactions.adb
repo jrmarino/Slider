@@ -103,7 +103,14 @@ package body Transactions is
                   return;
                end if;
                DHH.scan_history (ghost, ScanData);
-               DEL.launch_deleted (ghost, newghost);
+               if ScanData.path_check = DHH.deleted then
+                  DEL.launch_deleted (ghost, newghost);
+               else
+                  TIO.Put_Line ("Error: This file is missing history, " &
+                     "but this should not be the case:");
+                  TIO.Put_Line ("  " & ghost);
+                  TIO.Put_Line ("Sorry, Slider has to abort.");
+               end if;   
             end if;
             return;
          end;
