@@ -135,6 +135,7 @@ package body DragonFly.HAMMER.Ghosts is
             ndx      : Filename_Container.Extended_Index;
             filename : constant String := DIR.Simple_Name (item);
             truedir  : constant String := transaction & "/" & filename;
+            traxpath : constant String := directory_path & truedir;
             okay     : constant Boolean :=
                           not (filename = "." or filename = "..");
             found    : Boolean := False;
@@ -152,7 +153,7 @@ package body DragonFly.HAMMER.Ghosts is
                         end if;
                      end loop;
                      if not found and then
-                        directory_has_files (directory_path & truedir)
+                        directory_has_files (traxpath)
                      then
                         ghost.Append (truedir);
                      end if;
@@ -166,7 +167,7 @@ package body DragonFly.HAMMER.Ghosts is
                            inode   : DFS.inode_data;
                            result  : Int32;
                         begin
-                           DFS.stat (truedir, inode, result);
+                           DFS.stat (traxpath, inode, result);
                            if result < 0 then
                               raise FILE_Failure;
                            end if;
