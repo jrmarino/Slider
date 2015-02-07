@@ -37,6 +37,10 @@ package Transactions is
    c_red      : TIC.Color_Pair;
    c_yellow   : TIC.Color_Pair;
    c_magenta  : TIC.Color_Pair;
+   Key_Num1   : constant TIC.Key_Code := Character'Pos ('1');
+   Key_Num2   : constant TIC.Key_Code := Character'Pos ('2');
+   Key_Num3   : constant TIC.Key_Code := Character'Pos ('3');
+   Key_Num4   : constant TIC.Key_Code := Character'Pos ('4');
    bright     : constant TIC.Character_Attribute_Set := (
                    Bold_Character   => True,
                    others => False);

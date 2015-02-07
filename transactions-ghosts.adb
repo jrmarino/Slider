@@ -112,7 +112,7 @@ package body Transactions.Ghosts is
                         selection := selection + vheight;
                      end if;
                   end if;
-               when TIC.Key_F1 | carriage =>
+               when TIC.Key_F1 | Key_Num1 | carriage =>
                   TIC.Delete (inpwindow);
                   TIC.Delete (viewport);
                   TIC.Delete (comwindow);
@@ -124,7 +124,7 @@ package body Transactions.Ghosts is
                      return justdir &
                         file_ghosts.Element (listing (selection).index);
                   end if;
-               when TIC.Key_F4 =>
+               when TIC.Key_F4 | Key_Num4 =>
                   clear_input_window;
                   exit;
                when others =>

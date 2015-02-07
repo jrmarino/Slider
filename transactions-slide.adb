@@ -145,7 +145,7 @@ package body Transactions.Slide is
                      pick_version (viewable);
                      clear_input_window;
                   end if;
-               when TIC.Key_F1 =>
+               when TIC.Key_F1 | Key_Num1 =>
                   if viewable then
                      declare
                         seepath : constant String := path & ScanData.history
@@ -159,7 +159,7 @@ package body Transactions.Slide is
                      pick_version (viewable);
                      clear_input_window;
                   end if;
-               when TIC.Key_F2 =>
+               when TIC.Key_F2 | Key_Num2 =>
                   if ScanData.diff_old /= ScanData.diff_new then
                      show_menu (format => saveas);
                      declare
@@ -182,7 +182,7 @@ package body Transactions.Slide is
                         clear_input_window;
                      end;
                   end if;
-               when TIC.Key_F3 =>
+               when TIC.Key_F3 | Key_Num3 =>
                   show_menu (format => saveas);
                   declare
                      confirmed : Boolean;
@@ -204,7 +204,7 @@ package body Transactions.Slide is
                      clear_input_window;
                   end;
 
-               when TIC.Key_F4 =>
+               when TIC.Key_F4 | Key_Num4 =>
                   exit;
                when others =>
                   null;
@@ -735,7 +735,7 @@ package body Transactions.Slide is
                   if page < lastpage then
                      page := page + 1;
                   end if;
-               when TIC.Key_F4 => exit;
+               when TIC.Key_F4 | Key_Num4 => exit;
                when others => null;
             end case;
          end loop;
@@ -886,12 +886,12 @@ package body Transactions.Slide is
       loop
          KeyCode := TIC.Get_Keystroke (inpwindow);
          case KeyCode is
-            when TIC.Key_F1 =>
+            when TIC.Key_F1 | Key_Num1 =>
                if valid then
                   result := True;
                   exit;
                end if;
-            when TIC.Key_F4 => exit;
+            when TIC.Key_F4 | Key_Num4 => exit;
             when others     => null;
          end case;
       end loop;

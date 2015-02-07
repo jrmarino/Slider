@@ -83,24 +83,30 @@ package body Transactions.Delete is
       start_input_window;
       TIC.Set_KeyPad_Mode (Win => inpwindow, SwitchOn => True);
       loop
-         clear_input_window;
          KeyCode := TIC.Get_Keystroke (inpwindow);
          case KeyCode is
-            when TIC.Key_F1 =>
-               browse_file (origin);
-               show_menu (format => mformat);
-               show_version (viewable => viewable);
-            when TIC.Key_F2 =>
+            when TIC.Key_F1 | Key_Num1 =>
+               if viewable then
+                  browse_file (origin);
+                  show_menu (format => mformat);
+                  show_version (viewable => viewable);
+                  clear_input_window;
+               end if;
+            when TIC.Key_F2 | Key_Num2 =>
                recreate (origin, path, success);
                if success then
                   indicate_success (path);
                   exit;
+               else
+                  error_message ("Error: failed to restore file at " &
+                     "original location. (permissions issue?)");
                end if;
-            when TIC.Key_F3 =>
+            when TIC.Key_F3 | Key_Num3 =>
                show_menu (format => saveas);
                declare
                   confirmed : Boolean;
                begin
+                  clear_input_window;
                   confirmed := confirm_save_as (newpath);
                   show_menu (format => mformat);
                   show_version (viewable => viewable);
@@ -109,11 +115,15 @@ package body Transactions.Delete is
                      if success then
                         indicate_success (newpath);
                         exit;
+                     else
+                        error_message ("Error: failed to restore file at " &
+                           "SaveAs location. (permissions issue?)");
                      end if;
                   end if;
                end;
-            when TIC.Key_F4 => exit;
-            when others     => null;
+            when TIC.Key_F4 | Key_Num4 => exit;
+            when others     =>
+               clear_input_window;
          end case;
       end loop;
       TIC.Delete (inpwindow);
@@ -177,11 +187,11 @@ package body Transactions.Delete is
             KeyCode := TIC.Get_Keystroke (inpwindow);
             clear_input_window;
             case KeyCode is
-               when TIC.Key_F1 =>
+               when TIC.Key_F1 | Key_Num1 =>
                   browse_directory (path);
                   show_menu (format => mformat);
                   show_directory_version (path);
-               when TIC.Key_F2 =>
+               when TIC.Key_F2 | Key_Num2 =>
                   show_menu (format => saveas);
                   confirmed := confirm_save_as (cleanpath);
                   show_menu (format => mformat);
@@ -193,7 +203,7 @@ package body Transactions.Delete is
                         exit;
                      end if;
                   end if;
-               when TIC.Key_F3 =>
+               when TIC.Key_F3 | Key_Num3 =>
                   show_menu (format => saveas);
                   confirmed := confirm_save_as (newpath);
                   show_menu (format => mformat);
@@ -205,7 +215,7 @@ package body Transactions.Delete is
                         exit;
                      end if;
                   end if;
-               when TIC.Key_F4 => exit;
+               when TIC.Key_F4 | Key_Num4 => exit;
                when others     => null;
             end case;
          end loop;
@@ -438,12 +448,12 @@ package body Transactions.Delete is
       loop
          KeyCode := TIC.Get_Keystroke (inpwindow);
          case KeyCode is
-            when TIC.Key_F1 =>
+            when TIC.Key_F1 | Key_Num1 =>
                if valid then
                   result := True;
                   exit;
                end if;
-            when TIC.Key_F4 => exit;
+            when TIC.Key_F4 | Key_Num4 => exit;
             when others     => null;
          end case;
       end loop;
@@ -750,7 +760,7 @@ package body Transactions.Delete is
                   if page < lastpage then
                      page := page + 1;
                   end if;
-               when TIC.Key_F4 => exit;
+               when TIC.Key_F4 | Key_Num4 => exit;
                when others => null;
             end case;
          end loop;
@@ -1003,7 +1013,7 @@ package body Transactions.Delete is
                   if page < pages then
                      page := page + 1;
                   end if;
-               when TIC.Key_F4 =>
+               when TIC.Key_F4 | Key_Num4 =>
                   clear_input_window;
                   exit;
                when others =>
